@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chat Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #f0f0f0;
+        }
+
+        .chat-bubble {
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background-color: #DCF8C6;
+        }
+
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background-color: #e6e6e6;
+        }
+
+        .chat-footer {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .chat-footer textarea {
+            flex: 1;
+            resize: none;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-footer select {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .chat-footer button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .chat-footer button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            AI Chat Assistant
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="chat-footer">
+            <textarea id="message" rows="2" placeholder="Type your message..."></textarea>
+            <select id="model">
+                <option value="llama3">Llama3</option>
+                <option value="granite">Granite</option>
+                <option value="mixtral">Mixtral</option>
+            </select>
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const sendButton = document.getElementById('send-button');
+        const messageInput = document.getElementById('message');
+        const modelSelect = document.getElementById('model');
+
+        function addMessage(content, sender) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble', sender);
+            bubble.textContent = content;
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', () => {
+            const userMessage = messageInput.value.trim();
+            const model = modelSelect.value;
+
+            if (!userMessage) return;
+
+            // Add user message to chat
+            addMessage(userMessage, 'user');
+
+            // Send message to the server
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'message': userMessage,
+                    'model': model
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'assistant');
+                } else {
+                    addMessage(data.response, 'assistant');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('Error: ' + error, 'assistant');
+            });
+
+            // Clear input field
+            messageInput.value = '';
+        });
+    </script>
+</body>
+</html>
